@@ -1,0 +1,11 @@
+[workspace]
+members = ["crates/*"]
+resolver = "3"
+
+[workspace.dependencies]
+axum = { version = "0.8", features = ["macros"] }
+alloy = { version = "1", features = ["json-rpc"] }
+async-trait = "0.1"
+clap = { version = "4.5", features = ["derive", "env"] }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }

@@ -1,0 +1,9 @@
+[package]
+name = "provider"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+alloy.workspace = true
+async-trait.workspace = true
+rpc-types-optimism = { path = "../rpc-types-optimism" }
