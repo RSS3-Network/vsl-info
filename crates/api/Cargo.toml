@@ -10,3 +10,5 @@ tokio.workspace = true
 k8s = { path = "../k8s" }
 provider = { path = "../provider" }
 rpc-types-optimism = { path = "../rpc-types-optimism" }
+tracing.workspace = true
+tracing-subscriber.workspace = true
