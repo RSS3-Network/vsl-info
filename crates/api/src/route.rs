@@ -61,9 +61,15 @@ pub async fn get_topology(State(state): State<AppState>) -> Json<Vec<PeerInfoWit
 
     let mut results = Vec::new();
     for handle in handles {
-        if let Ok((Some(info), Some(peers))) = handle.await {
-            let total_connected = peers.total_connected;
-            let peers = peers.peers.into_iter().map(|(_, v)| v).collect();
+        if let Ok((
+            Some(info),
+            Some(PeerDump {
+                total_connected,
+                peers,
+            }),
+        )) = handle.await
+        {
+            let peers = peers.into_values().collect();
             results.push(PeerInfoWithPeers {
                 info,
                 total_connected,
