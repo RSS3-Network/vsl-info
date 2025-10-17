@@ -19,7 +19,6 @@ pub struct PeerInfoWithPeers {
     pub info: PeerInfo,
     #[serde(rename = "totalConnected")]
     pub total_connected: u64,
-    #[serde(flatten)]
     pub peers: Vec<PeerInfo>,
 }
 
