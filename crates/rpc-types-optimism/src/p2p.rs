@@ -38,9 +38,8 @@ pub struct PeerInfo {
 
     #[serde(rename = "gossipBlocks")]
     pub gossip_blocks: bool,
-
-    #[serde(rename = "scores")]
-    pub peer_scores: PeerScore,
+    // #[serde(rename = "scores")]
+    // pub peer_scores: PeerScore,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -17,8 +17,10 @@ pub struct AppState {
 pub struct PeerInfoWithPeers {
     #[serde(flatten)]
     pub info: PeerInfo,
+    #[serde(rename = "totalConnected")]
+    pub total_connected: u64,
     #[serde(flatten)]
-    pub peers: PeerDump,
+    pub peers: Vec<PeerInfo>,
 }
 
 pub async fn list_peers_info(State(state): State<AppState>) -> Json<Vec<PeerInfo>> {
@@ -60,7 +62,13 @@ pub async fn get_topology(State(state): State<AppState>) -> Json<Vec<PeerInfoWit
     let mut results = Vec::new();
     for handle in handles {
         if let Ok((Some(info), Some(peers))) = handle.await {
-            results.push(PeerInfoWithPeers { info, peers });
+            let total_connected = peers.total_connected;
+            let peers = peers.peers.into_iter().map(|(_, v)| v).collect();
+            results.push(PeerInfoWithPeers {
+                info,
+                total_connected,
+                peers,
+            });
         }
     }
 
