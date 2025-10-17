@@ -1,4 +1,5 @@
 mod route;
+mod service;
 use clap::Parser;
 use std::{error::Error, net::SocketAddr, result::Result, time::Duration};
 use tracing::level_filters::LevelFilter;

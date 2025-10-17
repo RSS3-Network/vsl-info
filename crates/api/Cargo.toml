@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 axum.workspace = true
 clap.workspace = true
+serde.workspace = true
 tokio.workspace = true
 k8s = { path = "../k8s" }
 provider = { path = "../provider" }

@@ -2,8 +2,10 @@ use std::time::Duration;
 
 use axum::{Json, Router, extract::State, routing::get};
 use k8s::Client;
-use provider::optimism::p2p::P2P;
-use rpc_types_optimism::p2p::PeerInfo;
+use rpc_types_optimism::p2p::{PeerDump, PeerInfo};
+use serde::{Deserialize, Serialize};
+
+use crate::service;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -11,23 +13,20 @@ pub struct AppState {
     pub timeout: Duration,
 }
 
-pub async fn get_peers(State(state): State<AppState>) -> Json<Vec<PeerInfo>> {
+#[derive(Clone, Serialize, Deserialize)]
+pub struct PeerInfoWithPeers {
+    #[serde(flatten)]
+    pub info: PeerInfo,
+    #[serde(flatten)]
+    pub peers: PeerDump,
+}
+
+pub async fn list_peers_info(State(state): State<AppState>) -> Json<Vec<PeerInfo>> {
     let endpoints = state.client.discover_rpc_endpoints().await.unwrap();
 
     let handles: Vec<_> = endpoints
         .into_iter()
-        .map(|e| {
-            let timeout = state.timeout;
-            tokio::spawn(async move {
-                tokio::time::timeout(timeout, async {
-                    let p = provider::create_provider(&e);
-                    p.info().await
-                })
-                .await
-                .ok()
-                .and_then(|r| r.ok())
-            })
-        })
+        .map(|e| tokio::spawn(service::info(e, state.timeout)))
         .collect();
 
     let mut results = Vec::new();
@@ -40,8 +39,37 @@ pub async fn get_peers(State(state): State<AppState>) -> Json<Vec<PeerInfo>> {
     Json(results)
 }
 
+pub async fn get_topology(State(state): State<AppState>) -> Json<Vec<PeerInfoWithPeers>> {
+    let endpoints = state.client.discover_rpc_endpoints().await.unwrap();
+    let timeout = state.timeout;
+
+    let handles: Vec<_> = endpoints
+        .into_iter()
+        .map({
+            move |e| {
+                let timeout = timeout;
+                tokio::spawn(async move {
+                    let info = service::info(e.clone(), timeout).await;
+                    let peers = service::peers(e, true, timeout).await;
+                    (info, peers)
+                })
+            }
+        })
+        .collect();
+
+    let mut results = Vec::new();
+    for handle in handles {
+        if let Ok((Some(info), Some(peers))) = handle.await {
+            results.push(PeerInfoWithPeers { info, peers });
+        }
+    }
+
+    Json(results)
+}
+
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/healthz", get(|| async { "OK" }))
-        .route("/peers", get(get_peers))
+        .route("/peers", get(list_peers_info))
+        .route("/topology", get(get_topology))
 }
